@@ -7,6 +7,7 @@ set(cppzmq_DIR "/home/iirc/workspace/thirdparty/cppzmq-4.9.0/output/share/cmake/
 
 find_package(OpenCV REQUIRED)
 find_package(cppzmq REQUIRED)
+find_package(WiringPi REQUIRED)
 
 message("WARNING" "OpenCV_INCLUDE_DIRS:" ${OpenCV_INCLUDE_DIRS})
 message("WARNING" "OpenCV_LIBS: " ${OpenCV_LIBS} )
@@ -15,10 +16,15 @@ message("WARNING" "ZeroMQ_LIBRARY:" cppzmq)
 
 
 
-include_directories(${OpenCV_INCLUDE_DIRS} ${cppzmq_INCLUDE_DIR})
+include_directories(${OpenCV_INCLUDE_DIRS} ${cppzmq_INCLUDE_DIR} ${WIRINGPI_INCLUDE_DIRS})
 
 add_executable(calibration calibration_data.cpp)
 target_link_libraries(calibration ${OpenCV_LIBS})
 
 add_executable(cylinder_warp cylinder_warping.cpp)
 target_link_libraries(cylinder_warp ${OpenCV_LIBS} cppzmq)
+
+add_executable(multicamera multicamera.cpp)
+target_link_libraries(multicamera ${OpenCV_LIBS} ${WIRINGPI_LIBRARIES})
+
+

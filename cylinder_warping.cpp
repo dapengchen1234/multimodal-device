@@ -5,12 +5,13 @@
 #include <cmath>
 #include<unistd.h>
 #include<zmq.hpp>
-
+#include<chrono>
 
 int main(){
 
-
     cv::FileStorage fs("camera1.yml",cv::FileStorage::READ);
+
+
 
     cv::Point2d fov;
     cv::Mat distCoeffs;
@@ -38,7 +39,12 @@ int main(){
 
 
     cv::VideoCapture capture(0);
-    
+    capture.set(cv::CAP_PROP_FRAME_WIDTH, 640);
+    capture.set(cv::CAP_PROP_FRAME_HEIGHT, 480);   
+    capture.set(cv::CAP_PROP_FPS, 60);
+
+
+
     sleep(1);
     capture >> image;
     int width;
@@ -46,7 +52,8 @@ int main(){
 
     height = image.rows;
     width = image.cols;
-    
+
+
     cv::Mat map1, map2;
     cv::Size imageSize(width, height);
 
@@ -66,23 +73,45 @@ int main(){
     /* zmq对象和视频接收端建立TCP通讯协议*/
     footage_socket.connect("tcp://" + IP + ":5555");
 
+    std::chrono::high_resolution_clock clock;
+    auto startTime = clock.now();
+    int frameCount = 0;
+    double fps;
+
 
     cv::Mat frame;
     while(true)
     {
-        capture >> frame; // 采集图像一帧到frame
 
-	// Encode the frame as JPEG
-        std::vector<uchar> buffer; 
-        std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 80};
-        cv::imencode(".jpg", frame, buffer, params);
+        // 采集图像一帧到frame
+	    capture >> frame;
+	    // Encode the frame as JPEG
+        // std::vector<uchar> buffer; 
+        // std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 80};
+        // cv::imencode(".jpg", frame, buffer, params);
 
-	// Send the encoded frame to PC
-        zmq::message_t request(buffer.size());
-        memcpy(request.data(), buffer.data(),buffer.size());
-	footage_socket.send(request);
+	    // // Send the encoded frame to PC
+        // zmq::message_t request(buffer.size());
+        // memcpy(request.data(), buffer.data(),buffer.size());
+	    // footage_socket.send(request);
 
-	cv::waitKey(10);
+        frameCount++;
+        auto endTime = clock.now();
+        //计算两个时间点之间时间差（以秒为单位）
+        std::chrono::duration<double> elapsedTime = endTime - startTime;
+        
+        if (elapsedTime.count() >= 1.0) {
+            // 计算帧率
+            fps = frameCount / elapsedTime.count();
+            
+            // 打印帧率
+            std::cout << "FPS: " << fps << std::endl;
+            
+            // 重置计时器和帧数计数器
+            startTime = endTime;
+            frameCount = 0;
+    }
+
 
     }
 
