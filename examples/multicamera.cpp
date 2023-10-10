@@ -79,7 +79,23 @@ MULTI_ADAPTER_T arducam_adapter_board[]={
             }
         }
     },
-    
+    {
+        .channel_id = 2,
+        .camera_id = "C",
+        .i2c_command = "i2cset -y 1 0x70 0x00 0x06",
+        .gpios = {
+            {   .gpio  = 7,
+                .value = 0,
+            },
+            {   .gpio  = 0,
+                .value = 1,
+            },
+            {   .gpio  = 1,
+                .value = 0,
+            }
+        }
+    },
+
 };
 
 const SENSOR_TYPE arducam_sensor_list[] = {
@@ -190,8 +206,9 @@ int init_camera(VideoCapture &cap){
 
             cap.set(CV_CAP_PROP_FRAME_WIDTH,320);
             cap.set(CV_CAP_PROP_FRAME_HEIGHT,240);
+            cap.set(CV_CAP_PROP_FPS, 60); 
             cap.grab();
-            system("v4l2-ctl -c exposure_time_absolute=500");
+            system("v4l2-ctl -c exposure_time_absolute=1000");
             arducam_adapter_board[ch_id].camera_exist = 1;
             ret ++;
             sleep(1);
@@ -211,19 +228,7 @@ void choose_channal(int ch_id){
             digitalWrite(arducam_adapter_board[ch_id].gpios[i].gpio,arducam_adapter_board[ch_id].gpios[i].value);  
         }
 }
-int width = 320;
-int height = 240;
-void mergeImage(Mat &dst,Mat &src,int index){
-    int offset = 10;
-    int cols = width;
-    int rows = height;
-    if(dst.empty()){
-        dst.create(rows * 2 + offset * 3,cols * 2 + offset * 3,CV_8UC3);
-        dst.setTo(Scalar(0xE5,0xE5,0xE5));
-        	// #6495ED
-    }
-    src.copyTo(dst(Rect((index % 2) * cols + (index % 2 + 1) * offset, (index / 2) * rows + (index / 2 + 1) * offset, width, height)));
-}
+
 
 TIME currentTimeMillis(){
     struct timeval start;
@@ -234,6 +239,14 @@ int main(int, char **)
 {
     Mat surface;
     Mat frame;
+    Mat frameA, frameB, frameC;
+
+    std::string prefixA = "sourceA_";
+    std::string prefixB = "sourceB_";
+    std::string prefixC = "sourceC_";
+    
+    std::string subfix = ".png"; 
+
     VideoCapture cap; 
     
     int fd = open ("/dev/i2c-1",O_RDWR);
@@ -251,63 +264,77 @@ int main(int, char **)
     int totalFrame = 0;
     int flag = 0;
     int count = 0;
+    int ret;
 
-    while(1)
+
+
+    for(int i=0;i<40;i++)
     {
-      if(arducam_adapter_board[flag].camera_exist){
-      	std::cout<<"start successfully"<<std::endl;
-	choose_channal(flag);
-	cap.grab();
-	cap>>frame;
-	if(frame.empty()){
-	   std::cout<<"fails"<<std::endl;	
-	}
-     	else{
-           if (flag==0){
-	      cv::imwrite("source_0.png", frame);
-	   }
-	   else{
-	     cv::imwrite("source_1.png", frame);
-	   }
-	
-	}
-     
-      }
-
-
-
-      
-
-      flag = (flag+1)%2; 
-    
-    }
-
-    /*
-    for (;;)
-    {
-        // wait for a new frame from camera and store it into 'frame'
-        if(arducam_adapter_board[flag].camera_exist){
+        
+        if(arducam_adapter_board[flag].camera_exist)
+        {
+            std::cout<<"start successfully"<<std::endl;
             choose_channal(flag);
-            cap.grab();
-            cap.grab();
-            cap.read(frame);
-            TIME start,end;
-            clock_t s1,e1;
-            ++totalFrame;
-            if(time(NULL) - begin_time >= 1){
-                printf("fps %d\n",totalFrame);
-                totalFrame = 0;
-                begin_time = time(NULL);
+     
+        
+
+            if(cap.isOpened()){
+
+                std::cout<<flag<<std::endl;
+                if(flag==0)
+                   cap.grab();
+                {  ret = cap.read(frameA);
+                }
+
+                if(flag==1)
+                   cap.grab();
+                {  ret = cap.read(frameB);
+                }
+
+                if(flag==2)
+                   cap.grab();
+                {  ret = cap.read(frameC);
+                }
+                //
+
+            }else{
+                std::cout<<"fails"<<std::endl;	
             }
-            if (frame.empty())
-            {
-                cerr << "ERROR! blank frame grabbed\n";
-                break;
-            }
-         }
-         flag = (1+flag)%2;
+                
+        }
+
+        if(flag==0 && ret==1)
+        {    
+            std::cout<<prefixA+std::to_string(i)+subfix<<std::endl;
+            cv::imwrite(prefixA+std::to_string(i)+subfix, frameA);        
+        }
+
+        if(flag==1 && ret==1)
+        {    
+            std::cout<<prefixB+std::to_string(i)+subfix<<std::endl;
+            cv::imwrite(prefixB+std::to_string(i)+subfix, frameB);        
+        }
+
+        if(flag==2 && ret==1)
+        {    
+            std::cout<<prefixC+std::to_string(i)+subfix<<std::endl;
+            cv::imwrite(prefixC+std::to_string(i)+subfix, frameC);        
+        }
+        
+        
+ 
          
+
+
+
+
+      flag = (flag+1)%3; 
+
+    
+
     }
-    */
+
+    // cv::imwrite("source_1.png", frameB);
+
     return 0;
 }

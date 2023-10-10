@@ -1,0 +1,148 @@
+#include "CameraStreamer.hpp"
+#include <queue>
+#include <chrono>
+#include <thread>
+#include <atomic>
+
+using namespace cv;
+
+
+std::atomic<bool> shouldTerminate(false);
+
+
+CameraStreamer::CameraStreamer(vector<string> stream_source)
+{
+    camera_source = stream_source;
+    camera_count = camera_source.size();
+    isUSBCamera = false;
+    startMultiCapture();
+}
+
+
+CameraStreamer::CameraStreamer(vector<int> capture_index)
+{
+    camera_index = capture_index;
+    camera_count = capture_index.size();
+    isUSBCamera = true;
+    startMultiCapture();
+}
+
+CameraStreamer::~CameraStreamer()
+{
+
+    shouldTerminate = true;
+    for(int i=0; i<camera_thread.size(); i++)
+    {
+        camera_thread[i]->join();
+    }
+    
+   
+    stopMultiCapture();
+}
+
+void CameraStreamer::captureFrame(int index)
+{
+    VideoCapture *capture = camera_capture[index];
+
+    while (!shouldTerminate)
+    {
+        cv::Mat frame;       
+        //Grab frame from camera capture
+        (*capture) >> frame;
+        string info = "extract the image"+ std::to_string(index);
+        std::cout<<info<<std::endl;
+        // sleep 
+        
+        frames[index] = frame;
+        // time 
+        //frame.release();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+        std::vector<uchar> buffer; 
+		std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 80};
+		cv::imencode(".jpg", frame, buffer, params);
+
+        zmq::message_t request(buffer.size());
+		memcpy(request.data(), buffer.data(),buffer.size());
+		
+        socket_vector[index]->send(request);
+
+		// if(i==0) footage_socket_channel0.send(request);
+
+
+
+    }
+}
+
+
+
+void CameraStreamer::startMultiCapture()
+{
+    VideoCapture *capture;
+    thread *t;
+    zmq::context_t *c;
+    zmq::socket_t  *s;
+
+
+    for (int i = 0; i < camera_count; i++)
+    {
+    //Make VideoCapture instance
+        if (!isUSBCamera){
+        string url = camera_source[i];
+        capture = new VideoCapture(url);
+        cout << "Camera Setup: " << url << endl;
+        }
+        else{
+            int idx = camera_index[i];
+            capture = new VideoCapture(idx);
+            capture->set(CAP_PROP_FRAME_WIDTH, 640.0);
+            capture->set(CAP_PROP_FRAME_HEIGHT, 480.0);
+            capture->set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
+
+            cout << "Camera Setup: " << to_string(idx) << endl;
+        }
+ 
+        //Put VideoCapture to the vector
+        camera_capture.push_back(capture);
+    
+        //Make thread instance
+        t = new thread(&CameraStreamer::captureFrame, this, i);
+    
+        //Put thread to the vector
+        camera_thread.push_back(t);
+        
+        //Make a mat install 
+        cv::Mat m;
+        
+        //Put mat to the vector
+        frames.push_back(m);
+
+        //ii
+        c = new zmq::context_t(1);
+        context_vector.push_back(c);
+
+        s = new zmq::socket_t(*c, ZMQ_PAIR);
+        std::string IP="192.168.137.1";
+        string IPinfo = "tcp://" + IP + ":" + std::to_string(5555+i);
+        s->connect(IPinfo);
+        socket_vector.push_back(s);
+
+    }
+}
+
+
+
+void CameraStreamer::stopMultiCapture()
+{
+    VideoCapture *cap;
+    for (int i = 0; i < camera_count; i++)
+    {
+        cap = camera_capture[i];
+        if (cap->isOpened())
+        {
+         //Relase VideoCapture resource
+         cap->release();
+         cout << "Capture " << i << " released" << endl;
+        }
+    }
+}
