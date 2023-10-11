@@ -4,6 +4,10 @@
 #include <thread>
 #include <atomic>
 
+
+
+
+
 using namespace cv;
 
 
@@ -40,6 +44,19 @@ CameraStreamer::~CameraStreamer()
     stopMultiCapture();
 }
 
+
+
+void CameraStreamer::setbuffer(int index, std::vector<uchar>& buffer){
+     std::lock_guard<std::mutex> lock(*(mutex_vector[index]));
+     frames[index] = buffer; 
+}
+void CameraStreamer::getbuffer(int index, std::vector<uchar>& buffer){
+    std::lock_guard<std::mutex> lock(*(mutex_vector[index]));
+     buffer = frames[index];  
+}
+
+
+
 void CameraStreamer::captureFrame(int index)
 {
     VideoCapture *capture = camera_capture[index];
@@ -52,25 +69,24 @@ void CameraStreamer::captureFrame(int index)
         string info = "extract the image"+ std::to_string(index);
         std::cout<<info<<std::endl;
         // sleep 
-        
-        frames[index] = frame;
-        // time 
+
         //frame.release();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
         std::vector<uchar> buffer; 
 		std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 80};
 		cv::imencode(".jpg", frame, buffer, params);
 
-        zmq::message_t request(buffer.size());
-		memcpy(request.data(), buffer.data(),buffer.size());
-		
-        socket_vector[index]->send(request);
+        // std::lock_guard<std::mutex> lock(mtx);
+        setbuffer(index, buffer);
 
-		// if(i==0) footage_socket_channel0.send(request);
+        // zmq::message_t request(buffer.size());
+		// memcpy(request.data(), buffer.data(),buffer.size());
+        // socket_vector[index]->send(request);
 
-
-
+        // zmq::message_t request(buffer.size());
+		// memcpy(request.data(), buffer.data(),buffer.size());
+		// socket_vector[index]->send(request, ZMQ_NOBLOCK);
     }
 }
 
@@ -82,6 +98,7 @@ void CameraStreamer::startMultiCapture()
     thread *t;
     zmq::context_t *c;
     zmq::socket_t  *s;
+    std::mutex *m_p;
 
 
     for (int i = 0; i < camera_count; i++)
@@ -121,11 +138,21 @@ void CameraStreamer::startMultiCapture()
         c = new zmq::context_t(1);
         context_vector.push_back(c);
 
-        s = new zmq::socket_t(*c, ZMQ_PAIR);
+        s = new zmq::socket_t(*c, ZMQ_PUSH);
+
+
+        int immediate = 1;
+        s->setsockopt(ZMQ_IMMEDIATE, &immediate, sizeof(immediate));
+
+
         std::string IP="192.168.137.1";
         string IPinfo = "tcp://" + IP + ":" + std::to_string(5555+i);
         s->connect(IPinfo);
         socket_vector.push_back(s);
+
+        m_p = new std::mutex;
+        mutex_vector.push_back(m_p);
+
 
     }
 }
