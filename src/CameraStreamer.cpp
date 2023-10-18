@@ -19,6 +19,8 @@ CameraStreamer::CameraStreamer(vector<string> stream_source)
     camera_source = stream_source;
     camera_count = camera_source.size();
     isUSBCamera = false;
+    IP="192.168.137.1";
+
     startMultiCapture();
 }
 
@@ -28,6 +30,8 @@ CameraStreamer::CameraStreamer(vector<int> capture_index)
     camera_index = capture_index;
     camera_count = capture_index.size();
     isUSBCamera = true;
+    IP="192.168.137.1";
+
     startMultiCapture();
 }
 
@@ -78,15 +82,12 @@ void CameraStreamer::captureFrame(int index)
 		cv::imencode(".jpg", frame, buffer, params);
 
         // std::lock_guard<std::mutex> lock(mtx);
-        setbuffer(index, buffer);
+        // setbuffer(index, buffer);
 
-        // zmq::message_t request(buffer.size());
-		// memcpy(request.data(), buffer.data(),buffer.size());
-        // socket_vector[index]->send(request);
+        zmq::message_t request(buffer.size());
+		memcpy(request.data(), buffer.data(),buffer.size());
+        socket_vector[index]->send(request);
 
-        // zmq::message_t request(buffer.size());
-		// memcpy(request.data(), buffer.data(),buffer.size());
-		// socket_vector[index]->send(request, ZMQ_NOBLOCK);
     }
 }
 
@@ -122,12 +123,7 @@ void CameraStreamer::startMultiCapture()
         //Put VideoCapture to the vector
         camera_capture.push_back(capture);
     
-        //Make thread instance
-        t = new thread(&CameraStreamer::captureFrame, this, i);
-    
-        //Put thread to the vector
-        camera_thread.push_back(t);
-        
+
         //Make a mat install 
         cv::Mat m;
         
@@ -144,14 +140,18 @@ void CameraStreamer::startMultiCapture()
         int immediate = 1;
         s->setsockopt(ZMQ_IMMEDIATE, &immediate, sizeof(immediate));
 
-
-        std::string IP="192.168.137.1";
         string IPinfo = "tcp://" + IP + ":" + std::to_string(5555+i);
         s->connect(IPinfo);
         socket_vector.push_back(s);
 
         m_p = new std::mutex;
         mutex_vector.push_back(m_p);
+
+        //Make thread instance
+        t = new thread(&CameraStreamer::captureFrame, this, i);
+        //Put thread to the vector
+        camera_thread.push_back(t);
+        
 
 
     }
