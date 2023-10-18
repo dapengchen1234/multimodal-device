@@ -86,7 +86,7 @@ void CameraStreamer::captureFrame(int index)
 
         zmq::message_t request(buffer.size());
 		memcpy(request.data(), buffer.data(),buffer.size());
-        socket_vector[index]->send(request);
+        socket_vector[index]->send(request, ZMQ_NOBLOCK);
 
     }
 }

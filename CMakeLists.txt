@@ -7,24 +7,27 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 set(OpenCV_DIR "/home/iirc/workspace/thirdparty/opencv-3.4.12/output/share/OpenCV")
 set(cppzmq_DIR "/home/iirc/workspace/thirdparty/cppzmq-4.9.0/output/share/cmake/cppzmq")
-set(camera_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-set(camera_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(portaudio_DIR "C://Users//chan//workspace//workspace_code//cpp_projects//portaudio-19.7.0//install//lib//cmake//portaudio")
 
+set(code_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(code_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 
 
 
 find_package(OpenCV REQUIRED)
 find_package(cppzmq REQUIRED)
-find_package(WiringPi REQUIRED)
+find_package(portaudio REQUIRED)
+
 
 message("WARNING" "OpenCV_INCLUDE_DIRS:" ${OpenCV_INCLUDE_DIRS})
 message("WARNING" "OpenCV_LIBS: " ${OpenCV_LIBS} )
 message("WARNING" "ZeroMQ_INCLUDE_DIR:" ${cppzmq_INCLUDE_DIR})
 message("WARNING" "ZeroMQ_LIBRARY:" cppzmq)
 
-file(GLOB SOURCE_FILES "src/*.cpp")
+file(GLOB SOURCE_FILES code_SRC)
 
+message("the source file has:" ${SOURCE_FILES})
 
 include_directories(${OpenCV_INCLUDE_DIRS} ${cppzmq_INCLUDE_DIR} ${WIRINGPI_INCLUDE_DIRS} ${camera_INCLUDE})
 
