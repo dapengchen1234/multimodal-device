@@ -21,7 +21,7 @@ CameraStreamer::CameraStreamer(vector<string> stream_source)
     isUSBCamera = false;
     IP="192.168.137.1";
 
-    startMultiCapture();
+
 }
 
 
@@ -32,18 +32,15 @@ CameraStreamer::CameraStreamer(vector<int> capture_index)
     isUSBCamera = true;
     IP="192.168.137.1";
 
-    startMultiCapture();
+
 }
 
 CameraStreamer::~CameraStreamer()
 {
 
+    std::cout<<"deconstruction"<<std::endl;
     shouldTerminate = true;
-    for(int i=0; i<camera_thread.size(); i++)
-    {
-        camera_thread[i]->join();
-    }
-    
+
    
     stopMultiCapture();
 }
@@ -59,19 +56,25 @@ void CameraStreamer::getbuffer(int index, std::vector<uchar>& buffer){
      buffer = frames[index];  
 }
 
+void CameraStreamer::stopthread(int index, std::vector<bool>& control_vector){
+    std::lock_guard<std::mutex> lock(*(mutex_vector[index]));
+    control_vector[index] = false;
+}
+
 
 
 void CameraStreamer::captureFrame(int index)
 {
     VideoCapture *capture = camera_capture[index];
  
-    while (true)
+    while (control_vector[index])
     {
         cv::Mat frame;       
         //Grab frame from camera capture
         (*capture) >> frame;
         string info = "extract the image"+ std::to_string(index);
         std::cout<<info<<std::endl;
+        
         // sleep 
 
         //frame.release();
@@ -148,6 +151,8 @@ void CameraStreamer::startMultiCapture()
         m_p = new std::mutex;
         mutex_vector.push_back(m_p);
 
+        control_vector.push_back(true);
+
         //Make thread instance
         t = new thread(&CameraStreamer::captureFrame, this, i);
         //Put thread to the vector
@@ -161,6 +166,18 @@ void CameraStreamer::startMultiCapture()
 
 void CameraStreamer::stopMultiCapture()
 {
+
+
+
+
+
+    for(int i=0; i<camera_thread.size(); i++)
+    {
+    stopthread(i, control_vector);       
+        camera_thread[i]->join();
+    }
+    
+
     VideoCapture *cap;
     for (int i = 0; i < camera_count; i++)
     {
@@ -172,4 +189,7 @@ void CameraStreamer::stopMultiCapture()
          cout << "Capture " << i << " released" << endl;
         }
     }
+
+
+
 }

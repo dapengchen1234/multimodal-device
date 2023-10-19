@@ -29,15 +29,24 @@ class CameraStreamer{
         vector<zmq::socket_t*> socket_vector;   
 
         vector<std::mutex*> mutex_vector; 
-        
+
+        vector<bool> control_vector;
+
         //Constructor for IP Camera capture
         CameraStreamer(vector<string> source);
         //Constructor for USB Camera capture
         CameraStreamer(vector<int> index);
         //Destructor for releasing resource(s)
         ~CameraStreamer();
+        
         void setbuffer(int index, std::vector<uchar>&);
         void getbuffer(int index, std::vector<uchar>&);
+        void stopthread(int index, std::vector<bool>&);
+
+        void startMultiCapture();
+        //release all camera capture resource(s)
+        void stopMultiCapture();
+
 
     private:
 
@@ -46,11 +55,9 @@ class CameraStreamer{
         std::string IP;
         // zmq::context_t context_t; 
         //initialize and start the camera capturing process(es)
-        void startMultiCapture();
-        //release all camera capture resource(s)
-        void stopMultiCapture();
+ 
         //main camera capturing process which will be done by the thread(s)
-        void captureFrame(int index);
+         void captureFrame(int index);
 
       
 };
