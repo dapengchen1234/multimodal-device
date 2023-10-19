@@ -64,8 +64,8 @@ void CameraStreamer::getbuffer(int index, std::vector<uchar>& buffer){
 void CameraStreamer::captureFrame(int index)
 {
     VideoCapture *capture = camera_capture[index];
-
-    while (!shouldTerminate)
+ 
+    while (true)
     {
         cv::Mat frame;       
         //Grab frame from camera capture
@@ -81,11 +81,12 @@ void CameraStreamer::captureFrame(int index)
 		std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 80};
 		cv::imencode(".jpg", frame, buffer, params);
 
-        // std::lock_guard<std::mutex> lock(mtx);
-        // setbuffer(index, buffer);
+
+        //std::lock_guard<std::mutex> lock(mtx);
+        //setbuffer(index, buffer);
 
         zmq::message_t request(buffer.size());
-		memcpy(request.data(), buffer.data(),buffer.size());
+		memcpy(request.data(), buffer.data(), buffer.size());
         socket_vector[index]->send(request, ZMQ_NOBLOCK);
 
     }
@@ -152,7 +153,6 @@ void CameraStreamer::startMultiCapture()
         //Put thread to the vector
         camera_thread.push_back(t);
         
-
 
     }
 }

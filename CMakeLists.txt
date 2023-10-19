@@ -33,7 +33,7 @@ include_directories(${OpenCV_INCLUDE_DIRS} ${cppzmq_INCLUDE_DIR} ${WIRINGPI_INCL
 
 
 add_executable(multicamera_multhread multicamera_multithread.cpp ${SOURCE_FILES})
-target_link_libraries(multicamera_multhread ${OpenCV_LIBS} cppzmq)
+target_link_libraries(multicamera_multhread ${OpenCV_LIBS} cppzmq portaudio)
 
 
 # add_executable(calibration calibration_data.cpp)

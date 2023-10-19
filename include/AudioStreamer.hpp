@@ -15,18 +15,24 @@ using namespace std;
 class AudioStreamer{
    
     public:
+        
+        //
+        AudioStreamer();
+
+        AudioStreamer(int sample_rate, int sample_frame);
+
+
         //Constructor for default audio devices
         AudioStreamer(vector<int> audio_index);
         //Constructor with specific parameters
-        AudioStreamer(vector<int> audio_index, int sample_rate, int frame);
+        AudioStreamer(vector<int> audio_index, int sample_rate, int sample_frame);
         //Destructor for releasing resouce(s)
         ~AudioStreamer();
         //
         vector<int>  audio_index_inner; 
-        vector<PaStream*> vector_stream;
-        vector<PaStreamParameters> vector_inparameters; 
         vector<thread*> vector_thread; 
         vector<float*> vector_buffer;
+        vector<PaStreamParameters> vector_pa;
 
         vector<zmq::context_t*> context_vector;
         vector<zmq::socket_t*> socket_vector;
@@ -40,7 +46,10 @@ class AudioStreamer{
     private:
         // private parameters
         int SAMPLE_RATE = 16000;
-        int FRAMES = 1280;
+        int SAMPLE_FRAME = 1280;
+        int CHANNEL_COUNT = 1;
+        bool USE_DEFAULT;
+
         std::string IP;
     
 
