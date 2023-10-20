@@ -85,7 +85,6 @@ int main()
     as.startMultiCapture();
 	stop();
 	as.stopMultiCapture();
-
 }
 
 
