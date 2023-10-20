@@ -7,25 +7,53 @@
 #include <iostream>
 #include <fstream>
 #include <portaudio.h>
-#include <conio.h> // 需要包含此头文件
+#include <unistd.h>
+#include <termios.h>
 
+bool checkKeyboardInput() {
+    struct termios oldSettings, newSettings;
+    tcgetattr(STDIN_FILENO, &oldSettings);
+    newSettings = oldSettings;
+    newSettings.c_lflag &= (~ICANON & ~ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newSettings);
 
+    fd_set readfds;
+    FD_ZERO(&readfds);
+    FD_SET(STDIN_FILENO, &readfds);
 
-int stop(){
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
 
-  std::cout << "Press ESC to continue..." << std::endl;
-  while (true) {
-    if (_kbhit()) { // 检测是否有键盘输入
-      char key = _getch(); // 获取键盘输入
+    int ready = select(1, &readfds, NULL, NULL, &timeout);
 
-      if (key == 27) { // 判断是否为ESC键的ASCII码值
-        break; // 跳出循环
-      }
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldSettings);
+
+    if (ready == -1) {
+        return false; // Error during select()
     }
-  }
-  std::cout << "Continued!" << std::endl;
+    if (FD_ISSET(STDIN_FILENO, &readfds)) {
+        return true; // Keyboard input is available
+    }
+    return false; // No keyboard input
+}
 
-  return 0;
+
+int stop() {
+
+    while (true) {
+        if (checkKeyboardInput()) { // Get keyboard input
+            int key = getchar(); // Get ASCII value of the input
+
+            if (key == 27) { // Check if it's the ESC key
+                break; // Break out of the loop
+            }
+        }
+    }
+
+    printf("Continued!");
+
+    return 0;
 }
 
 int main()
@@ -49,15 +77,15 @@ int main()
 
 	
 
-	CameraStreamer cam(capture_index);
-	cam.startMultiCapture();
+	// CameraStreamer cam(capture_index);
+	// cam.startMultiCapture();
+	// stop();
+    AudioStreamer  as;
+	// build a tunel for image transport
+    as.startMultiCapture();
 	stop();
-    // AudioStreamer  as;
-	// // build a tunel for image transport
-    // as.startMultiCapture();
-	// stop();
-	// as.stopMultiCapture();
-	// stop();
+	as.stopMultiCapture();
+
 }
 
 

@@ -5,15 +5,15 @@ project(demo)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
-set(OpenCV_DIR "C://Users//chan//workspace//workspace_code//cpp_projects//opencv//install")
-set(cppzmq_DIR "C://Users//chan//workspace//workspace_code//cpp_projects//cppzmq_install//share//cmake//cppzmq")
-set(portaudio_DIR "C://Users//chan//workspace//workspace_code//cpp_projects//portaudio-19.7.0//install//lib//cmake//portaudio")
+# set(OpenCV_DIR "C://Users//chan//workspace//workspace_code//cpp_projects//opencv//install")
+# set(cppzmq_DIR "C://Users//chan//workspace//workspace_code//cpp_projects//cppzmq_install//share//cmake//cppzmq")
+# set(portaudio_DIR "C://Users//chan//workspace//workspace_code//cpp_projects//portaudio-19.7.0//install//lib//cmake//portaudio")
 
 
 
-# set(OpenCV_DIR "/home/iirc/workspace/thirdparty/opencv-3.4.12/output/share/OpenCV")
-# set(cppzmq_DIR "/home/iirc/workspace/thirdparty/cppzmq-4.9.0/output/share/cmake/cppzmq")
-# set(portaudio_DIR "/home/iirc/workspace/thirdparty/portaudio_install/lib/cmake/portaudio")
+set(OpenCV_DIR "/home/iirc/workspace/thirdparty/opencv-3.4.12/output/share/OpenCV")
+set(cppzmq_DIR "/home/iirc/workspace/thirdparty/cppzmq-4.9.0/output/share/cmake/cppzmq")
+set(portaudio_DIR "/home/iirc/workspace/thirdparty/portaudio_install/lib/cmake/portaudio")
 
 set(code_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(code_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/include)
