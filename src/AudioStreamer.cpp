@@ -9,7 +9,18 @@ const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, voi
 {
 
     CallbackPara* params = static_cast<CallbackPara*>(userData);   
-    std::cout<<(*params).index<<std::endl;
+    
+
+    int index = (*params).index;
+    AudioStreamer* asp =(*params).asp;
+    int numbytes = asp->numbytes;
+
+    std::cout<<"send successfully"<<std::endl;
+
+    zmq::message_t request(numbytes);
+    memcpy(request.data(), inputBuffer, numbytes);
+    asp->socket_vector[index]->send(request, ZMQ_NOBLOCK);
+
 
     return 0;    
 }
@@ -19,6 +30,8 @@ const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, voi
 AudioStreamer::AudioStreamer(){
     audio_count = 1;
     USE_DEFAULT = true;
+    IP="192.168.137.1";
+
 
 }
 
@@ -28,6 +41,8 @@ AudioStreamer::AudioStreamer(int sample_rate, int frame){
     SAMPLE_FRAME  = frame;
     audio_count = 1;
     USE_DEFAULT = true;
+    IP="192.168.137.1";
+
 
 }
 
@@ -35,6 +50,8 @@ AudioStreamer::AudioStreamer(vector<int> audio_index){
     audio_index_inner = audio_index;
     audio_count = audio_index_inner.size();
     USE_DEFAULT = false;
+    IP="192.168.137.1";
+
 
 }
 
@@ -44,6 +61,8 @@ AudioStreamer::AudioStreamer( vector<int> audio_index, int sample_rate, int fram
     SAMPLE_RATE = sample_rate;
     SAMPLE_FRAME = frame;
     USE_DEFAULT = false;
+    IP="192.168.137.1";
+
 
 }
 
@@ -125,13 +144,9 @@ bool AudioStreamer::startMultiCapture()
         socket_vector.push_back(s);
 
 
-
-
         cp = new CallbackPara(i, this);
         vector_callback.push_back(cp);
 
-
-        std::cout<<"here"<<audio_count<<" "<<USE_DEFAULT<< std::endl;
 
         PaStream* stream = nullptr;
         PaError err;

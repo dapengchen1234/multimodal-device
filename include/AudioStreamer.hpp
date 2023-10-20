@@ -65,7 +65,6 @@ class AudioStreamer{
         int SAMPLE_FRAME = 1280;
         int CHANNEL_COUNT = 1;
         bool USE_DEFAULT;
-
         std::string IP;
     
 
