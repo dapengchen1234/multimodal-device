@@ -7,7 +7,6 @@
 #include <iostream>
 #include <fstream>
 #include <portaudio.h>
-#include <unistd.h>
 #include <termios.h>
 
 bool checkKeyboardInput() {
