@@ -1,4 +1,5 @@
 import zmq
+import numpy as np
 
 class Audio_zmq:
     def __init__(self, IP=None):
@@ -10,7 +11,8 @@ class Audio_zmq:
 
         self.socket.bind(self.ip)
 
-
+    def __del__(self):
+        self.close()
 
     def send_message(self, message):
         pass 
@@ -21,16 +23,10 @@ class Audio_zmq:
     
 
     def receive_data(self):
-        data = self.receive_message(self)
+        data = self.receive_message()
         data_np = np.frombuffer(data, dtype=np.float32)
+        return data_np
         
-
-    def visualize_data(self):
-        pass 
-
-    def play_data(self):
-        pass
-
 
     def close(self):
         self.socket.close()
