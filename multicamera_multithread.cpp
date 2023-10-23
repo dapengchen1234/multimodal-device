@@ -76,14 +76,18 @@ int main()
 
 	
 
-	// CameraStreamer cam(capture_index);
-	// cam.startMultiCapture();
-	// stop();
+	CameraStreamer cam(capture_index);
+	cam.startMultiCapture();	
     AudioStreamer  as;
-	// build a tunel for image transport
     as.startMultiCapture();
-	stop();
+
+    stop();
 	as.stopMultiCapture();
+    cam.stopMultiCapture();
+
+    // build a tunel for image transport
+
+
 }
 
 
