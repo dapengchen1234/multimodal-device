@@ -31,7 +31,6 @@ try:
         # 从ZeroMQ套接字接收音频数据
         data = au.receive_data()
         print("read the audio successfully")
-        print(data.shape)
         # 将音频数据写入输出流进行播放
         au_vis.update(data)
 
