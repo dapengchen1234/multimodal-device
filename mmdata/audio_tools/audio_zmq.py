@@ -1,11 +1,28 @@
 import zmq
 import numpy as np
+import threading
+
 
 class Audio_zmq:
+
     def __init__(self, IP=None):
+
+        # 初始化
+        self.ip = "tcp://192.168.137.1:4444" if IP is None else IP
+
+
+        # 用一个线程来接受音频
+        self.receive_thread = threading.Thread(target=self._receive_image)
+
+        # image position 
+        self.lastest_audioterminal_data = None 
+
+
+
+
+
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PULL)
-        self.ip = "tcp://192.168.137.1:4444" if IP is None else IP
 
         # 初始化 socket 
 
